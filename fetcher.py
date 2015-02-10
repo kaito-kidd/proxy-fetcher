@@ -30,17 +30,18 @@ class Fetcher(object):
             request = urllib2.Request(site)
             request.add_header("User-Agent", UA)
             try:
-                print "fetch proxy from %s" % site
+                print "fetching %s" % site
                 response = urllib2.urlopen(
                     request, timeout=self.timeout).read()
                 proxies = re.findall(PROXY_REGX, response)
 
             except (urllib2.URLError, socket.error) as exc:
-                print "fetch %s failed: %s" % (site, str(exc))
+                print "[ERROR] fetch %s failed: %s" % (site, str(exc))
                 proxies = []
             else:
-                print "%s proxies from %s" % (len(proxies), site)
+                print "[OK] %s proxies from %s" % (len(proxies), site)
             self.output(proxies)
+        print "done!"
 
     def output(self, proxies):
         """输出
@@ -48,8 +49,8 @@ class Fetcher(object):
         """
         if not proxies:
             return
-        for proxy in proxies:
-            with open(self.proxy_dest, "a") as fpt:
+        with open(self.proxy_dest, "a") as fpt:
+            for proxy in proxies:
                 fpt.write("%s\n" % proxy)
 
 

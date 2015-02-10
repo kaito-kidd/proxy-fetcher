@@ -4,12 +4,25 @@
 """
 
 import re
+import socket
+import urllib2
+import random
+import time
+import threading
+import httplib
 
 from config import (
     PROXY_DEST, PROXY_GOOD_DEST, TEST_TIMEOUT,
-    TEST_URL, CHECK_MARK
+    TEST_URL, CHECK_MARK, USER_AGENT_LIST, REFERER_LIST,
 )
 
+# proxy compile
+REGX = r"(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3}):(\d{1,5})"
+PROXY_RE = re.compile(REGX)
+
+# good, bad flag
+GOOD_STATUS = 1
+BAD_STATUS = 0
 
 class Tester(object):
     """代理测试器
@@ -29,6 +42,8 @@ class Tester(object):
 
         self.all_proxies = self.load_proxies(self.input_file)
 
+        self.lock = threading.Lock()
+
     def load_proxies(self, filename):
         """从文件加载代理,过滤
 
@@ -43,13 +58,13 @@ class Tester(object):
                 proxy_list.add(proxy)
         return proxy_list
 
-    def check_proxy(self, proxy):
+    @staticmethod
+    def check_proxy(proxy):
         """校验代理
 
         @proxy, str, 单个代理
         """
-        regx = r"(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3}):(\d{1,5})"
-        m = re.match(regx, proxy)
+        m = PROXY_RE.match(proxy)
         items = m.groups()
         try:
             for i in range(4):
@@ -60,3 +75,93 @@ class Tester(object):
         except ValueError:
             return False
         return True
+
+    def do_test(self, proxy):
+        """测试代理
+
+        @proxy, str, 单个代理
+        """
+        # build
+        proxy_handler = urllib2.ProxyHandler({"http": proxy})
+        opener = urllib2.build_opener(proxy_handler, urllib2.HTTPHandler)
+        ua, referer = random.choice(USER_AGENT_LIST), random.choice(REFERER_LIST)
+        # opener.addheaders = [
+        #     ("User-Agent", random.choice(USER_AGENT_LIST)),
+        #     ("Referer", random.choice(REFERER_LIST))
+        # ]
+        opener.addheaders = [
+            ("User-Agent", ua),
+            ("Referer", referer),
+        ]
+        urllib2.install_opener(opener)
+        start = time.time()
+        try:
+            # fetch
+            response = urllib2.urlopen(self.test_url, timeout=self.timeout)
+            status_code = response.code
+            content = response.read(3000)
+        except (socket.error, urllib2.HTTPError, urllib2.URLError):
+            self.log(BAD_STATUS, proxy, time.time() - start)
+            self.bad_proxies.add(proxy)
+            return
+        except httplib.BadStatusLine:
+            import pdb
+            pdb.set_trace()
+        speed = time.time() - start
+        # content test & log, output
+        if self.content_test(status_code, content):
+            self.log(GOOD_STATUS, proxy, speed)
+            self.good_output(proxy, speed)
+            self.good_proxies.add(proxy)
+        else:
+            self.log(BAD_STATUS, proxy, speed)
+            self.bad_proxies.add(proxy)
+
+    def content_test(self, status_code, content):
+        """内容检测
+
+        @status_code, int, 相应状态码
+        @content, str, 相应正文
+        """
+        if status_code != 200:
+            return False
+        if self.check_mark not in content:
+            return False
+        return True
+
+    def log(self, status, proxy, speed):
+        """log
+
+        @status, int, 1: good, 0: bad
+        @proxy, str, proxy
+        @speed, float, 速度
+        """
+        msg = "%s [%d/%d] %s time: %f" \
+            % ("[OK]" if status else "[ERROR]",
+               len(self.good_proxies) + len(self.bad_proxies),
+               len(self.all_proxies), proxy, speed)
+        with self.lock:
+            print(msg)
+
+    def good_output(self, proxy, speed):
+        """output
+
+        @proxy, str, proxy
+        @speed, float, 速度
+        """
+        with self.lock:
+            with open(self.output_file, "a") as fop:
+                fop.write("%s|%s\n" % (proxy, speed))
+
+
+def main():
+    """ main """
+    tester = Tester()
+    for proxy in tester.all_proxies:
+        t = threading.Thread(target=tester.do_test, args=(proxy,))
+        t.start()
+
+
+
+if __name__ == "__main__":
+    main()
