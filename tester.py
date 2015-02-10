@@ -85,14 +85,14 @@ class Tester(object):
         proxy_handler = urllib2.ProxyHandler({"http": proxy})
         opener = urllib2.build_opener(proxy_handler, urllib2.HTTPHandler)
         ua, referer = random.choice(USER_AGENT_LIST), random.choice(REFERER_LIST)
-        # opener.addheaders = [
-        #     ("User-Agent", random.choice(USER_AGENT_LIST)),
-        #     ("Referer", random.choice(REFERER_LIST))
-        # ]
         opener.addheaders = [
-            ("User-Agent", ua),
-            ("Referer", referer),
+            ("User-Agent", random.choice(USER_AGENT_LIST)),
+            ("Referer", random.choice(REFERER_LIST))
         ]
+        # opener.addheaders = [
+        #     ("User-Agent", ua),
+        #     ("Referer", referer),
+        # ]
         urllib2.install_opener(opener)
         start = time.time()
         try:
@@ -100,13 +100,11 @@ class Tester(object):
             response = urllib2.urlopen(self.test_url, timeout=self.timeout)
             status_code = response.code
             content = response.read(3000)
-        except (socket.error, urllib2.HTTPError, urllib2.URLError):
+        # except (socket.error, urllib2.HTTPError, urllib2.URLError):
+        except:
             self.log(BAD_STATUS, proxy, time.time() - start)
             self.bad_proxies.add(proxy)
             return
-        except httplib.BadStatusLine:
-            import pdb
-            pdb.set_trace()
         speed = time.time() - start
         # content test & log, output
         if self.content_test(status_code, content):
