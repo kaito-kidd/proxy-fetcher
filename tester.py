@@ -72,7 +72,7 @@ class Tester(object):
                     return False
                 if not int(items[4]) < 65536:
                     return False
-        except ValueError:
+        except (ValueError, IndexError):
             return False
         return True
 
