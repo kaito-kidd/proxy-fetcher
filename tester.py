@@ -11,6 +11,8 @@ import time
 import threading
 import httplib
 
+from thread_pool.pool import Pool
+
 from config import (
     PROXY_DEST, PROXY_GOOD_DEST, TEST_TIMEOUT,
     TEST_URL, CHECK_MARK, USER_AGENT_LIST, REFERER_LIST,
@@ -155,10 +157,10 @@ class Tester(object):
 def main():
     """ main """
     tester = Tester()
-    for proxy in tester.all_proxies:
-        t = threading.Thread(target=tester.do_test, args=(proxy,))
-        t.start()
-
+    pool = Pool(size=30)
+    pool.add_tasks(
+        [(tester.do_test, (proxy,)) for proxy in tester.all_proxies])
+    pool.run()
 
 
 if __name__ == "__main__":
