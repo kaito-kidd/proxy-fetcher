@@ -4,18 +4,17 @@
 """
 
 import re
-import socket
 import urllib2
 import random
 import time
 import threading
-import httplib
 
 from thread_pool.pool import Pool
 
 from config import (
     PROXY_DEST, PROXY_GOOD_DEST, TEST_TIMEOUT,
     TEST_URL, CHECK_MARK, USER_AGENT_LIST, REFERER_LIST,
+    POOL_SIZE
 )
 
 # proxy compile
@@ -25,6 +24,7 @@ PROXY_RE = re.compile(REGX)
 # good, bad flag
 GOOD_STATUS = 1
 BAD_STATUS = 0
+
 
 class Tester(object):
     """代理测试器
@@ -86,15 +86,10 @@ class Tester(object):
         # build
         proxy_handler = urllib2.ProxyHandler({"http": proxy})
         opener = urllib2.build_opener(proxy_handler, urllib2.HTTPHandler)
-        ua, referer = random.choice(USER_AGENT_LIST), random.choice(REFERER_LIST)
         opener.addheaders = [
             ("User-Agent", random.choice(USER_AGENT_LIST)),
             ("Referer", random.choice(REFERER_LIST))
         ]
-        # opener.addheaders = [
-        #     ("User-Agent", ua),
-        #     ("Referer", referer),
-        # ]
         urllib2.install_opener(opener)
         start = time.time()
         try:
@@ -102,7 +97,6 @@ class Tester(object):
             response = urllib2.urlopen(self.test_url, timeout=self.timeout)
             status_code = response.code
             content = response.read(3000)
-        # except (socket.error, urllib2.HTTPError, urllib2.URLError):
         except:
             self.log(BAD_STATUS, proxy, time.time() - start)
             self.bad_proxies.add(proxy)
@@ -157,7 +151,7 @@ class Tester(object):
 def main():
     """ main """
     tester = Tester()
-    pool = Pool(size=30)
+    pool = Pool(size=POOL_SIZE)
     pool.add_tasks(
         [(tester.do_test, (proxy,)) for proxy in tester.all_proxies])
     pool.run()

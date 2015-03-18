@@ -71,3 +71,6 @@ USER_AGENT_LIST = [
     'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.0; ZoomSpider.net bot; .NET CLR 1.1.4322)',
     'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; QihooBot 1.0 qihoobot@qihoo.net)',
 ]
+
+# 测试代理线程池大小
+POOL_SIZE = 30
