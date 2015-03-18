@@ -28,4 +28,4 @@
     python tester.py
 
 ## 说明
-测试可用代理可根据需要调整`Pool`的大小,详情见`tester.py`。
+测试可用代理可根据需要调整`Pool`的大小,详情见`config.py`。
