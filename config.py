@@ -73,4 +73,4 @@ USER_AGENT_LIST = [
 ]
 
 # 测试代理线程池大小
-POOL_SIZE = 30
+POOL_SIZE = 100

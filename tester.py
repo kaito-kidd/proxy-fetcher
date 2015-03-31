@@ -98,18 +98,18 @@ class Tester(object):
             status_code = response.code
             content = response.read(3000)
         except:
-            self.log(BAD_STATUS, proxy, time.time() - start)
             self.bad_proxies.add(proxy)
+            self.log(BAD_STATUS, proxy, time.time() - start)
             return
         speed = time.time() - start
         # content test & log, output
         if self.content_test(status_code, content):
+            self.good_proxies.add(proxy)
             self.log(GOOD_STATUS, proxy, speed)
             self.good_output(proxy, speed)
-            self.good_proxies.add(proxy)
         else:
-            self.log(BAD_STATUS, proxy, speed)
             self.bad_proxies.add(proxy)
+            self.log(BAD_STATUS, proxy, speed)
 
     def content_test(self, status_code, content):
         """内容检测
@@ -130,11 +130,11 @@ class Tester(object):
         @proxy, str, proxy
         @speed, float, 速度
         """
-        msg = "%s [%d/%d] %s time: %f" \
-            % ("[OK]" if status else "[ERROR]",
-               len(self.good_proxies) + len(self.bad_proxies),
-               len(self.all_proxies), proxy, speed)
         with self.lock:
+            msg = "%s [%d/%d/%d] %s time: %f" \
+                % ("[OK]" if status else "[ERROR]",
+                   len(self.good_proxies), len(self.bad_proxies),
+                   len(self.all_proxies), proxy, speed)
             print(msg)
 
     def good_output(self, proxy, speed):
