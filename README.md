@@ -8,7 +8,8 @@
 代理采集器主程序，采集网站IP代理，输出目录见配置文件。
 
 ## tester.py
-代理IP检查器，也叫测试过滤器，采集器采集的代理过多，但很多都不可用，用该程序检测可用的代理。
+代理IP检查器，也叫测试过滤器。<br/>
+采集器采集的代理太多，但很多都不可用，用该程序测试可用的代理，输出目录见配置文件。
 
 ## 依赖
 依赖[thread_pool](https://github.com/kaito-kidd/thread_pool)。
@@ -21,10 +22,10 @@
     git submodule init
     git submodule update
 
-    # 获取代理列表,其中可能包含不可用的
+    # 根据配置的网站采集代理
     python fetcher.py
 
-    # 测试代理列表,找出可用的代理IP
+    # 测试代理，找出可用的代理
     python tester.py
 
 ## 说明
