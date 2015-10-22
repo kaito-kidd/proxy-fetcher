@@ -69,10 +69,10 @@ class Tester(object):
         m = PROXY_RE.match(proxy)
         items = m.groups()
         try:
+            if not int(items[4]) < 65536:
+                return False
             for i in range(4):
                 if not 0 < int(items[i]) < 255:
-                    return False
-                if not int(items[4]) < 65536:
                     return False
         except (ValueError, IndexError):
             return False
